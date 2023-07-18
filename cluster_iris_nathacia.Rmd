@@ -1,0 +1,104 @@
+---
+title: 'Cluster Analysis: Iris dataset'
+author: "Nathacia Nathacia"
+date: '2022-10-09'
+output: pdf_document
+---
+
+#### Loading necessary packages and dataset
+```{r, results='hide'}
+library(cluster)
+library(factoextra)
+library(dbscan)
+
+data("iris")
+View(iris)
+```
+
+### Investigating data
+We investigate the iris dataset by displaying its name, class, structure, summary, and the first and last few rows.
+```{r}
+names(iris)
+class(iris)
+View(iris)
+str(iris)
+summary(iris)
+head(iris)
+tail(animals)
+```
+
+
+### Preprocessing
+We preprocess the iris dataset by removing missing values, scaling the numerical variables, and storing the preprocessed dataset as iris_c.
+```{r}
+iris_c <- iris[,1:4]
+iris_c <- na.omit(iris_c)
+iris_c <- scale(iris_c)
+#iris_c
+```
+
+
+### Kmeans clustering
+We apply k-means clustering to the preprocessed iris_c dataset by calculating the pairwise Euclidean distances between the observations, visualizing the distance matrix using a heatmap, and performing k-means clustering with k=2 centers and 25 random starts. The result showed that the dataset can be clustered into two distinct groups.
+```{r}
+distance <- get_dist(iris_c)
+#distance
+fviz_dist(distance)
+```
+
+
+### Initial clustering
+```{r}
+k1 <- kmeans(iris_c, centers = 2, nstart = 25)
+str(k1)
+k1
+fviz_cluster(k1, data = iris_c)
+```
+
+
+### Determining the right number of clusters
+To determine the optimal number of clusters, we used the elbow method and silhouette method. The elbow method plots the total within-cluster sum of squares (WSS) as a function of the number of clusters. We can use the "elbow" in the plot to determine the optimal number of clusters. The silhouette method, on the other hand, measures how similar an object is to its own cluster compared to other clusters. The optimal number of clusters can be determined by choosing the value that maximizes the silhouette width. Based on both methods, we found that the optimal number of clusters is 3.
+```{r}
+set.seed(123)
+fviz_nbclust(iris_c, kmeans, method = 'wss')
+
+fviz_nbclust(iris_c, kmeans, method = 'silhouette')
+```
+
+
+### Final kmeans clustering
+We applied k-means clustering again to the dataset, this time with the optimal number of clusters (3) identified in the previous step. We used the kmeans() function to cluster the data into three clusters, with a total of 25 starting positions. We then visualized the clusters using the fviz_cluster() function from the factoextra package. The result showed that the dataset can be clustered into three distinct groups.
+```{r}
+finalk <- kmeans(iris_c, 3, nstart = 25)
+finalk
+fviz_cluster(finalk, data = iris_c)
+```
+
+
+### Hierarchical clustering
+We also applied hierarchical clustering to the dataset using the agnes() function from the cluster package. We used three different linkage methods: complete, single, and average. The agnes() function returns an object of class agnes, which contains information about the hierarchical clustering. We then plotted the dendrogram using the plot() function. The agglomerative coefficient values were also computed for each linkage method, with values closer to 1 suggesting a stronger clustering structure.
+```{r}
+hc1 <- agnes(iris_c, method = 'complete')
+hc1
+hc1$ac #agglomerative coefficient. values closer to 1 suggest strong clustering structure
+plot(hc1)
+
+hc2 <- agnes(iris_c, method = 'single')
+hc2$ac
+
+hc3 <- agnes(iris_c, method = 'average')
+hc3$ac
+```
+
+
+### Density based clustering
+Lastly, we performed density-based clustering using the dbscan() function from the dbscan package. We first used the kNNdistplot() function to determine the value of the eps parameter, which represents the maximum distance between two points in the same cluster. We then used the dbscan() function with a minPts parameter of 3 to cluster the data. We visualized the clusters using the fviz_cluster() function from the factoextra package. The result showed that the dataset can be clustered into three distinct groups.
+```{r}
+kNNdistplot(iris_c, k=3)
+abline(h=.7, lty=2)
+
+db <- dbscan(iris_c, .7, minPts = 3)
+fviz_cluster(db, data = iris_c)
+print(db)
+```
+
